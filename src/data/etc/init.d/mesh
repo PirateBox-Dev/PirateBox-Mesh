@@ -1,0 +1,21 @@
+#!/bin/sh /etc/rc.common
+
+NAME=mesh
+START=89
+STOP=11
+
+# Include Mesh work-file
+. /usr/share/pb-mesh/mesh.common
+
+#Load config
+. /etc/mesh.config
+
+start() {
+  mesh_start
+}
+
+stop {
+  mesh_stop
+}
+
+

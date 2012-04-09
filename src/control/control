@@ -1,0 +1,13 @@
+Package: piratebox-mesh
+Version: 0.1
+Depends: kmod-batman-adv 
+Provides: 
+Source: package/piratebox-mesh
+Section: net
+Status: unknown ok not-installed
+Essential: no
+Priority: optional
+Maintainer: Matthias Strubel  <matthias.strubel@aod-rpg.de>
+Architecture: all
+Installed-Size: 101
+Description: Installs script for implementing B.A.T.M.A.N. adv on openwrt. It does not use the in build configurations, because the same script runs on other hardware too. 
