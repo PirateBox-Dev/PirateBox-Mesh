@@ -11,11 +11,11 @@ STOP=11
 . /etc/mesh.config
 
 start() {
-  mesh_start
+  build_mesh
 }
 
-stop {
-  mesh_stop
+stop() {
+  destroy_mesh
 }
 
 
