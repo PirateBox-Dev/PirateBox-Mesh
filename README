@@ -1,0 +1,27 @@
+# Enables the OpenWRT - PirateBox to mesh up with each other.
+# (c)2012 Matthias Strubel  matthias.strubel@aod-rpg.de
+#  Licenced under GPL-3
+
+
+KNOW SUPPORTED DEVICES:
+  - TP-LINK MR3020  (wifi0: Atheros 9380)
+  - <on Work>
+
+PACKAGE DEPENDENCIES:
+  - <on work>
+
+WHAT DO THIS PACKAGE?:
+  - It installs on script with all needed defaults running in Mesh mode
+  - Script set up everything needed to get the Box in Mesh mode 
+  - Box in Mesh don't have to be a AP at same time
+
+WHY AN EXTRA PACKAGE?:
+  - I don't want to add the Mesh-software dependency to the normal PB-Package
+  - Easier Update if something changes
+
+INSTALL: 
+ - <on work>
+
+NOTEBOOK?:
+ - Not every notebook can hold two network-interfaces online
+ - You can join the network download this <on Work> and do <on work>
