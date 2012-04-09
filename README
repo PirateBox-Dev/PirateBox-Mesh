@@ -7,8 +7,12 @@ KNOW SUPPORTED DEVICES:
   - TP-LINK MR3020  (wifi0: Atheros 9380)
   - <on Work>
 
-PACKAGE DEPENDENCIES:
+OPENWRT-PACKAGE DEPENDENCIES:
+  kmod-batman-adv   
   - <on work>
+
+DEBIAN DEPENDENCIES:
+  batman-adv seems to be installed on default. You need to install batctl
 
 WHAT DO THIS PACKAGE?:
   - It installs on script with all needed defaults running in Mesh mode
@@ -19,8 +23,10 @@ WHY AN EXTRA PACKAGE?:
   - I don't want to add the Mesh-software dependency to the normal PB-Package
   - Easier Update if something changes
 
-INSTALL: 
- - <on work>
+INSTALL on OPENWRT: 
+ You have two possibilities: 
+   1.   With internet    : https://github.com/MaStr/mkPirateBox-Mesh/wiki/Install-on-OpenWRT-with-Internet
+   2.   Without internet : https://github.com/MaStr/mkPirateBox-Mesh/wiki/Install-on-OpenWRT-without-Internet
 
 NOTEBOOK?:
  - Not every notebook can hold two network-interfaces online
