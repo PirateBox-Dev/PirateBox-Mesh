@@ -5,10 +5,10 @@
 
 KNOW SUPPORTED DEVICES:
   - TP-LINK MR3020  (wifi0: Atheros 9380)
-  - <on Work>
+  - Linksys WRT54GL; tested trunk image. Works as relay only; no IPv6 support in Trunk
 
 OPENWRT-PACKAGE DEPENDENCIES:
-  kmod-batman-adv   
+  kmod-batman-adv  (this depends on kmod-lib-crc16) 
   - <on work>
 
 DEBIAN DEPENDENCIES:
