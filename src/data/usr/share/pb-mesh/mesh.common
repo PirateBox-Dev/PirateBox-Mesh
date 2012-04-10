@@ -45,9 +45,12 @@ do_wlan_if_up() {
   ifconfig $MESH_IF mtu $MTU_NEEDED
   check_rc $?
 
-  echo "Disabling IPV6 for $MESH_IF - IF without any configuration!"
-  echo "1" > /proc/sys/net/ipv6/conf/$MESH_IF/disable_ipv6
-  check_rc $?
+  # Only disable, if IPV6 exists on device
+  if [ -e "/proc/sys/net/ipv6/conf/$MESH_IF/disable_ipv6" ] ; then
+	  echo "Disabling IPV6 for $MESH_IF - IF without any configuration!"
+	  echo "1" > /proc/sys/net/ipv6/conf/$MESH_IF/disable_ipv6
+	  check_rc $?
+  fi	  
 
   if [ "$EXCHANGE_MAC" = "yes" ] ; then
     echo "Changing $MESH_IF MAC to $MODMAC"
