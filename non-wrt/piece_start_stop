@@ -1,0 +1,36 @@
+
+
+#  ----piece_start_stop Start
+# -- Stuff will be added on Make 
+
+check_config() {
+  if [ "$MESH_CHANNEL" = "0" ] ; then 
+     echo "Please set option MESH_CHANNEL"
+     exit 255
+  elif [ "$SOURCEMAC" =  "$MODMAC"  ] ; then
+     echo "Please set option SOURCEMAC to the MAC Address of you wifi device"
+     ifconfig wlan0 || ifconfig
+     echo "Please set option SOURCEMAC to the MAC Address of you wifi device"
+     echo "   or enter a modified one in MODMAC and set EXCHANGE_MAC=no "
+     exit 255
+  fi
+}
+
+
+#  Start Stop stuff for running in script directly
+if [ "$1" = "start" ] ; then
+  check_config   
+  build_mesh
+elif  [  "$1" = "stop" ] ; then
+  destroy_mesh
+elif [  "$1" = "restart" ] ; then
+  destroy_mesh
+  check_config
+  build_mesh
+else
+  echo "valid options are start|stop|restart"
+  exit 255
+fi
+#  ----piece_start_stop End
+
+
