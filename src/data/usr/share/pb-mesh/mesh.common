@@ -1,5 +1,6 @@
 #!/bin/sh
 
+BATCTL_FOUND="yes"
 
 check_rc() {
   MSG=""
@@ -69,17 +70,30 @@ do_wlan_if_up() {
 
 
 do_batman_up() {
-  echo "Adding $MESH_IF to B.A.T.M.A.N."
-  batctl if add  $MESH_IF  
-  check_rc $?
+
+  if [ "$BATCTL_FOUND" = "yes" ] ; then
+     echo "Adding $MESH_IF to B.A.T.M.A.N."
+     batctl if add  $MESH_IF  
+     check_rc $?
+  else
+      echo "Adding $MESH_IF to B.A.T.M.A.N. via  /sys/class/ "
+      echo "$BAT_IF" > /sys/class/net/$MESH_IF/batman_adv/mesh_iface 
+       check_rc $?
+  fi
 
   echo "Starting $BAT_IF"
   ifconfig $BAT_IF 0.0.0.0 up
   check_rc $?
 
-  echo "Setting B.A.T.M.A.N. Intervall to $BAT_INT "
-  batctl it $BAT_INT
-  check_rc $?
+  if [ "$BATCTL_FOUND" = "yes" ] ; then
+    echo "Setting B.A.T.M.A.N. Intervall to $BAT_INT "
+    batctl it $BAT_INT
+    check_rc $?
+  else 
+    echo "Setting B.A.T.M.A.N. Intervall via /sys/class/ to $BAT_INT "
+    echo "$BAT_INT"  > /sys/class/net/$BAT_IF/mesh/orig_interval 
+    check_rc $?
+  fi
 }
 
 mesh_start() {
@@ -106,8 +120,13 @@ do_wlan_if_down() {
 }
 
 do_batman_down() {
-  echo "Remove $MESH_IF from  $BAT_IF "
-  batctl if del $MESH_IF
+  if [ "$BATCTL_FOUND" = "yes" ] ; then
+     echo "Remove $MESH_IF from  $BAT_IF "
+     batctl if del $MESH_IF
+  else
+    echo "Remove $MESH_IF from  $BAT_IF via /sys/class/"
+    echo none  > /sys/class/net/$MESH_IF/batman_adv/mesh_iface
+  fi
 }
 
 check_requirements() {
@@ -116,8 +135,11 @@ check_requirements() {
      modprobe  batman-adv
      check_rc $? "Loading kernel module batman-adv failed.. maybe not installed?"
   fi
-  batctl if > /dev/null
-  check_rc $? "Failed running batctl- maybe not installed? "
+  if [ ! batctl if > /dev/null ] ; then 
+    echo "Failed running batctl- maybe not installed? "
+    echo "Try to use  /sys/class/"  
+    BATCTL_FOUND='no'
+  fi
 }
 
 build_mesh() {
