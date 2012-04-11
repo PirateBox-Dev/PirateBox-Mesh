@@ -5,7 +5,7 @@ START=89
 STOP=11
 
 # Include Mesh work-file
-. /usr/share/pb-mesh/mesh.common
+. /usr/share/mesh/mesh.common
 
 #Load config
 . /etc/mesh.config

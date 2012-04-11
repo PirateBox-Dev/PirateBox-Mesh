@@ -1,0 +1,161 @@
+#!/bin/sh
+
+#-------- Common Functiond
+BATCTL_FOUND="yes"
+
+check_rc() {
+  MSG=""
+  if [ -n "$2" ] ; then
+    MSG="Error in $2"
+  else
+    MSG="Failed with RC $1"
+  fi
+  [ "$1" != "0" ] && echo $MSG && exit 255
+}
+
+
+uci_get_details() {
+  #get mac Adress from uci
+  SOURCEMAC=$(uci get wireless.$RADIODEVICE.macaddr)
+  check_rc $? "getting  SourceMac"
+  [[ $MESH_CHANNEL = "0" ]] && MESH_CHANNEL=$( uci get wireless.$RADIODEVICE.channel)
+  check_rc $? "getting Channel"
+}
+
+modify_MAC() {
+  # Modify MAC for 2nd interface if not set
+  #Change two letters
+  if [ "$MODMAC" = "" ] ;  then
+    MODMAC=$( echo $SOURCEMAC | sed 's/c/a/'  | sed 's/1/2/' )
+    check_rc $?  "sed :( "
+    echo "Found MAC for $RADIODEVICE :  $SOURCEMAC"
+    echo " modified for 2nd Wifi-if  :  $MODMAC"
+  fi
+}
+
+do_wlan_if_up() {
+   echo  "Setting up AdHoc Interface for B.A.T.M.A.N. "
+   iw $IW_DEVICE interface add $MESH_IF type adhoc
+   check_rc $?
+
+  echo "Increasing MTU for $MESH_IF to $MTU_NEEDED"
+  ifconfig $MESH_IF mtu $MTU_NEEDED
+  check_rc $?
+
+  # Only disable, if IPV6 exists on device
+  if [ -e "/proc/sys/net/ipv6/conf/$MESH_IF/disable_ipv6" ] ; then
+	  echo "Disabling IPV6 for $MESH_IF - IF without any configuration!"
+	  echo "1" > /proc/sys/net/ipv6/conf/$MESH_IF/disable_ipv6
+	  check_rc $?
+  fi	  
+
+  if [ "$EXCHANGE_MAC" = "yes" ] ; then
+    echo "Changing $MESH_IF MAC to $MODMAC"
+    ifconfig $MESH_IF hw ether $MODMAC
+    check_rc $?
+  fi
+
+  echo "Setting up Channel $MESH_CHANNEL"
+  iwconfig $MESH_IF channel $MESH_CHANNEL
+  check_rc $?
+
+  echo "Setting SSID for Mesh $MESH_SSID"
+  iwconfig $MESH_IF  essid  $MESH_SSID
+  check_rc $?
+}
+
+
+do_batman_up() {
+
+  if [ "$BATCTL_FOUND" = "yes" ] ; then
+     echo "Adding $MESH_IF to B.A.T.M.A.N."
+     batctl if add  $MESH_IF  
+     check_rc $?
+  else
+      echo "Adding $MESH_IF to B.A.T.M.A.N. via  /sys/class/ "
+      echo "$BAT_IF" > /sys/class/net/$MESH_IF/batman_adv/mesh_iface 
+       check_rc $?
+  fi
+
+  echo "Starting $BAT_IF"
+  ifconfig $BAT_IF 0.0.0.0 up
+  check_rc $?
+
+  if [ "$BATCTL_FOUND" = "yes" ] ; then
+    echo "Setting B.A.T.M.A.N. Intervall to $BAT_INT "
+    batctl it $BAT_INT
+    check_rc $?
+  else 
+    echo "Setting B.A.T.M.A.N. Intervall via /sys/class/ to $BAT_INT "
+    echo "$BAT_INT"  > /sys/class/net/$BAT_IF/mesh/orig_interval 
+    check_rc $?
+  fi
+}
+
+mesh_start() {
+  echo "Starting Mesh-IF!" 
+  ifconfig $MESH_IF 0.0.0.0 up
+  check_rc $?
+
+# Extract auto IPV6 adress and remove it from mesh if
+#  AUTO_IPV6=$( ifconfig $MESH_IF | grep "inet6.* " | sed -e "s/^.*inet6 addr: //" -e "s/ Scope.*\$//" )
+#  echo "Removing .. $AUTO_IPV6 from $MESH_IF"
+#  ifconfig $MESH_IF inet6 del $AUTO_IPV6
+#  check_rc $? "resetting IPv6 on $MESH_IF"
+
+}
+
+mesh_stop() {
+  echo "Stopping Mesh if!"
+  ifconfig $MESH_IF down
+}
+
+do_wlan_if_down() {
+   echo "Cleaning up interfaces"
+   iw dev $MESH_IF del 
+}
+
+do_batman_down() {
+  if [ "$BATCTL_FOUND" = "yes" ] ; then
+     echo "Remove $MESH_IF from  $BAT_IF "
+     batctl if del $MESH_IF
+  else
+    echo "Remove $MESH_IF from  $BAT_IF via /sys/class/"
+    echo none  > /sys/class/net/$MESH_IF/batman_adv/mesh_iface
+  fi
+}
+
+check_requirements() {
+  lsmod | grep batman >> /dev/null
+  if [ "$?" != "0" ] ; then
+     modprobe  batman-adv
+     check_rc $? "Loading kernel module batman-adv failed.. maybe not installed?"
+  fi
+  batctl if > /dev/null
+  if [ $? != "0" ] ; then 
+    echo "Failed running batctl- maybe not installed? "
+    echo "Try to use  /sys/class/"  
+    BATCTL_FOUND='no'
+  fi
+}
+
+build_mesh() {
+  check_requirements
+  echo "Starting Mesh Network with uci-collect..."
+  [ "$OPENWRT" = "yes" ] &&  echo "Starting Mesh Network with uci-collect..." \
+  	&& uci_get_details
+  modify_MAC
+  do_wlan_if_up
+  mesh_start
+  do_batman_up
+  echo "finished"
+}
+
+destroy_mesh() {
+  echo "Stopping Mesh Network..."
+  mesh_stop
+  do_batman_down
+  do_wlan_if_down
+  echo "finished"
+}
+## mesh.common END
