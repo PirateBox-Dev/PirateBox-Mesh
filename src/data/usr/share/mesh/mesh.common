@@ -38,6 +38,16 @@ do_wlan_if_up() {
    iw $IW_DEVICE interface add $MESH_IF type adhoc
    check_rc $?
 
+   #echo "Setting fixed BSSID up"
+   #iwconfig $MESH_IF ap $CUSTOM_BSSID
+   #check_rc $?
+
+   if [ "$DISABLE_RTS" = "yes" ] ; then
+     echo "Disabling RTS/CTS "
+     iwconfig $MESH_IF rts off
+     check_rc $?
+   fi
+
   echo "Increasing MTU for $MESH_IF to $MTU_NEEDED"
   ifconfig $MESH_IF mtu $MTU_NEEDED
   check_rc $?
