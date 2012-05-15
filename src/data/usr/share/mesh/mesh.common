@@ -2,6 +2,7 @@
 
 #-------- Common Functiond
 BATCTL_FOUND="yes"
+V6_GEN_RESULT=""
 
 check_rc() {
   MSG=""
@@ -21,6 +22,25 @@ uci_get_details() {
   [[ $MESH_CHANNEL = "0" ]] && MESH_CHANNEL=$( uci get wireless.$RADIODEVICE.channel)
   check_rc $? "getting Channel"
 }
+
+generate_v6() {
+  IF=$1
+  PREFIX="fd00"
+
+  test -n "$2" && PREFIX=$2
+
+  CURRENT_GEN=`ifconfig $IF |
+          grep "inet6 addr: fe80" |
+          sed  -n "s|^.*::\([^/]*\)/.*|\1|p" |
+          tr -d ":"`
+
+  FIXED=`echo ${CURRENT_GEN} | tr -d "\012" | 
+                 sed "s|\(....\)\(....\)\(....\)\(....\)|\1:\2:\3:\4|"`
+
+  echo "Extracted for $IF : $PREFIX::$FIXED "
+  V6_GEN_RESULT="$PREFIX::$FIXED"
+}
+
 
 modify_MAC() {
   # Modify MAC for 2nd interface if not set
@@ -76,7 +96,6 @@ do_wlan_if_up() {
 
 
 do_batman_up() {
-
   if [ "$BATCTL_FOUND" = "yes" ] ; then
      echo "Adding $MESH_IF to B.A.T.M.A.N."
      batctl if add  $MESH_IF  
@@ -100,6 +119,20 @@ do_batman_up() {
     echo "$BAT_INT"  > /sys/class/net/$BAT_IF/mesh/orig_interval 
     check_rc $?
   fi
+
+  if [ "$SET_GENERATED_IPV6" = "yes" ] ; then
+    echo "Generating IPv6 address for $BAT_IF"
+    generate_v6 $BAT_IF $IPV6_GEN_PREFIX
+    check_rc $?
+    IPV6_FIXED="$V6_GEN_RESULT"/"$IPV6_GEN_NETMASK" 
+  fi
+
+  if [ "$SET_IPV6" = "yes" ] ; then
+    echo "Setting up ipv6 address ->$IPV6_FIXED<-  on  $BAT_IF"
+    ifconfig  "$BAT_IF"  add $IPV6_FIXED
+    check_rc $?
+  fi
+
 }
 
 mesh_start() {
