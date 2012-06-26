@@ -27,6 +27,9 @@ elif [  "$1" = "restart" ] ; then
   destroy_mesh
   check_config
   build_mesh
+elif [ "$1" = "test_gen" ] ; then
+  generate_ipv4
+  echo "Generated IPv4: $IPV4_FIXED"
 else
   echo "valid options are start|stop|restart"
   exit 255

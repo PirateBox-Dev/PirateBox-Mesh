@@ -42,6 +42,45 @@ generate_v6() {
 }
 
 
+RANDOM_NUM=0
+random_num() {
+  NUM=$((`</dev/urandom tr -dc 1-9 | head -c3`))
+  [[ "$NUM" >  "254" ]] && NUM=$(($NUM / 7))
+  RANDOM_NUM=$NUM
+}
+
+RANDOM_IP_NUM=0
+random_ip_num() {
+  #Repeat until IP is in range
+  RANDOM_IP_NUM=0
+  RANDOM_NUM=0
+  until  [[  "$RANDOM_NUM" -gt "000" ]] && [[ $RANDOM_NUM -lt "255" ]]
+  do
+     random_num
+     [[ 1 == 2  ]] && echo  "Result random_num $RANDOM_NUM" 
+  done
+  RANDOM_IP_NUM=$RANDOM_NUM
+
+   [[ 1 == 2  ]] &&  echo "result random_ip_num $RANDOM_IP_NUM"
+}
+
+
+generate_ipv4() {
+    # 10.x.y.z
+    x=0
+    y=0
+    z=0
+
+    random_ip_num
+    x=$RANDOM_IP_NUM
+    random_ip_num
+    y=$RANDOM_IP_NUM
+    random_ip_num
+    z=$RANDOM_IP_NUM
+
+    IPV4_FIXED="10.$x.$y.$z"
+} 
+
 modify_MAC() {
   # Modify MAC for 2nd interface if not set
   #Change two letters
@@ -133,6 +172,18 @@ do_batman_up() {
     check_rc $?
   fi
 
+  if [ "$IPV4_GENERATE" = "yes" ] ; then
+     echo "Generating IPv4 10.x.y.z address for $BAT_IF "
+     generate_ipv4
+  fi
+
+  if [ "$SET_IPV4" = "yes" ] ; then
+    echo "Setting up ipv4 address ->$IPV4_FIXED<-  on  $BAT_IF"
+     ifconfig  "$BAT_IF"  add $IPV4_FIXED netmask $IPV4_SUBNET_MASK
+     check_rc $?
+     #Save IPv4 Address to tmp-space for later use
+     echo "$IPV4_FIXED" > $IPV4_IP_SAVE
+  fi
 }
 
 mesh_start() {
