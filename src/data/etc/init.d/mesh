@@ -3,6 +3,8 @@
 NAME=mesh
 START=89
 STOP=11
+EXTRA_COMMANDS="init"
+EXTRA_HELP="   init  Initializes all the OpenWRT stuff"
 
 # Include Mesh work-file
 . /usr/share/mesh/mesh.common
@@ -18,4 +20,7 @@ stop() {
   destroy_mesh
 }
 
+init() {
+  openwrt_postinst 
 
+}

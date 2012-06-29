@@ -1,5 +1,11 @@
 #!/bin/sh
+. /etc/mesh.config
+. /usr/share/mesh/mesh.common
+rm $IPV4_IP_SAVE
 
 /etc/init.d/mesh disable
 /etc/init.d/mesh stop
+
+openwrt_preremove
+
 

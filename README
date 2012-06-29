@@ -31,3 +31,5 @@ INSTALL on OPENWRT:
 NOTEBOOK?:
  - Not every notebook can hold two network-interfaces online
  - You can join the network download this <on Work> and do <on work>
+ - currently there is no iptables included. You won't be able to route
+
