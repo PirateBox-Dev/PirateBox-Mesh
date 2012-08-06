@@ -1,5 +1,79 @@
 #!/bin/sh
 
+#------------------------------------ 
+#  Configuration for piratebox-mesh
+#------------------------------------
+
+RADIODEVICE=radio0
+OPENWRT=no
+OPENWRT_NETWORK="meshwork"
+# Interface for normal AP Mode
+AP_IF=wlan0
+# Interface for MESH
+MESH_IF=mesh0
+# Channel
+#  If 0 it will use the same channel as configured 
+#       in /etc/config/wireless -> RADIODEVICE
+MESH_CHANNEL=0
+# Mesh-SSID
+MESH_SSID="PB-Mesh"
+# Needed MTU for B.A.T.M.A.N.
+MTU_NEEDED=1528
+# Change this to 2nd card, if needed
+IW_DEVICE=phy0
+# Source MAC Adress.. If non WRT should be filled
+SOURCEMAC=""
+# Modified MAC
+#   if empty, it will exchange a few letters for itself
+MODMAC=""
+# Needed for 2nd device comming up
+EXCHANGE_MAC="yes"
+
+#Fixed BSSID to avoid cell splitting
+CUSTOM_BSSID="12:CA:FF:EE:BA:BA"
+
+#Disable RTS/CTS
+DISABLE_RTS="yes"
+
+####
+# BATMAN stuff
+BAT_IF=bat0
+# Increase lookup Frequency to 5s
+BAT_INT=5000
+
+#-------------------------------------------
+# SET Ipv6 Stuff
+SET_IPV6="no"
+# Do you want a fixed address?
+IPV6_FIXED=""
+
+####--------
+#  Extracts the fe80 address and adds an choosen prefix
+####
+SET_GENERATED_IPV6="yes"
+#used for mesh if
+IPV6_GEN_PREFIX="fdc0:ffea"
+#Enter without /
+IPV6_GEN_NETMASK="48"
+#---------------------------------------------
+
+#---------------------------------------------
+# IPV4 Stuff
+SET_IPV4="yes"
+# Do you want to choose your IP? 
+IPV4_FIXED=""
+IPV4_SUBNET_MASK="255.0.0.0"
+
+# Generates a 10.x.y.z  IP Adress
+IPV4_GENERATE="no"
+
+#Load from file or openWRT config (if openwrt)
+IPV4_LOAD="yes"
+
+IPV4_IP_SAVE=/etc/mesh_ipv4.cfg
+
+#----- Configuration END
+
 #-------- Common Functiond
 BATCTL_FOUND="yes"
 V6_GEN_RESULT=""
@@ -333,3 +407,42 @@ openwrt_preremove() {
 }
 
 ## mesh.common END
+
+
+#  ----piece_start_stop Start
+# -- Stuff will be added on Make 
+
+check_config() {
+  if [ "$MESH_CHANNEL" = "0" ] ; then 
+     echo "Please set option MESH_CHANNEL"
+     exit 255
+  elif [ "$SOURCEMAC" =  "$MODMAC"  ] ; then
+     echo "Please set option SOURCEMAC to the MAC Address of you wifi device"
+     ifconfig wlan0 || ifconfig
+     echo "Please set option SOURCEMAC to the MAC Address of you wifi device"
+     echo "   or enter a modified one in MODMAC and set EXCHANGE_MAC=no "
+     exit 255
+  fi
+}
+
+
+#  Start Stop stuff for running in script directly
+if [ "$1" = "start" ] ; then
+  check_config   
+  build_mesh
+elif  [  "$1" = "stop" ] ; then
+  destroy_mesh
+elif [  "$1" = "restart" ] ; then
+  destroy_mesh
+  check_config
+  build_mesh
+elif [ "$1" = "test_gen" ] ; then
+  generate_ipv4
+  echo "Generated IPv4: $IPV4_FIXED"
+else
+  echo "valid options are start|stop|restart"
+  exit 255
+fi
+#  ----piece_start_stop End
+
+
