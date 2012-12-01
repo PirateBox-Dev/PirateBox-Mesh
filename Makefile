@@ -1,5 +1,5 @@
 NAME = piratebox-mesh
-VERSION = 0.2.6
+VERSION = 0.2.7
 ARCH = all
 IPK = $(NAME)_$(VERSION)_$(ARCH).ipk
 IPKDIR = src
