@@ -1,5 +1,5 @@
 Package: piratebox-mesh
-Version: 0.2.7
+Version: 0.2.8
 Depends: kmod-batman-adv wireless-tools 
 Provides: 
 Source: package/piratebox-mesh
