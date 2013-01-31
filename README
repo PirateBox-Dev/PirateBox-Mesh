@@ -5,11 +5,15 @@
 
 KNOW SUPPORTED DEVICES:
   - TP-LINK MR3020  (wifi0: Atheros 9380)
+  - TP-LINK MR3040  
+  - MikroTek RB411Uha
+  - TP-LINK WR842ND 
+
   - Linksys WRT54GL; tested trunk image. Works as relay only; no IPv6 support in Trunk
 
 OPENWRT-PACKAGE DEPENDENCIES:
   kmod-batman-adv  (this depends on kmod-lib-crc16) 
-  - <on work>
+  wireless-tools
 
 DEBIAN DEPENDENCIES:
   batman-adv seems to be installed on default. You need to install batctl
