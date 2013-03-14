@@ -5,6 +5,8 @@ BATCTL_FOUND="yes"
 V6_GEN_RESULT=""
 
 check_rc() {
+### First parameter is the RC
+### 2n parameter is a error-message
   MSG=""
   if [ -n "$2" ] ; then
     MSG="Error in $2"
