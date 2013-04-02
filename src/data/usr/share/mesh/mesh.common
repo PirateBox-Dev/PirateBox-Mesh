@@ -5,6 +5,8 @@ BATCTL_FOUND="yes"
 V6_GEN_RESULT=""
 
 check_rc() {
+### First parameter is the RC
+### 2n parameter is a error-message
   MSG=""
   if [ -n "$2" ] ; then
     MSG="Error in $2"
@@ -19,8 +21,13 @@ uci_get_details() {
   #get mac Adress from uci
   SOURCEMAC=$(uci get wireless.$RADIODEVICE.macaddr)
   check_rc $? "getting  SourceMac"
-  [[ $MESH_CHANNEL = "0" ]] && MESH_CHANNEL=$( uci get wireless.$RADIODEVICE.channel)
-  check_rc $? "getting Channel"
+  
+  if [  $MESH_CHANNEL = "0" ] ; then
+        MESH_CHANNEL=$( uci get wireless.$RADIODEVICE.channel) 
+        check_rc $? "getting Channel"
+   else
+     echo "Taking channel for mesh interface out of the configuration"   
+   fi
 
   if [ "$IPV4_LOAD" = "yes" ] ; then
      IPV4_FIXED=$(uci get network.$OPENWRT_NETWORK.ipaddr) 
@@ -257,7 +264,7 @@ build_mesh() {
   echo "Starting Mesh Network with uci-collect..."
   [ "$OPENWRT" = "yes" ] &&  echo "Starting Mesh Network with uci-collect..." \
   	&& uci_get_details
-  modify_MAC
+  [ "$EXCHANGE_MAC" = "yes" ]  &&  modify_MAC
   do_wlan_if_up
   mesh_start
   do_batman_up
