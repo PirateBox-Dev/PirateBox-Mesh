@@ -196,11 +196,11 @@ do_batman_up() {
   fi
 
   #Load if not OpenWRt from dataset
-   [ "$OPENWRT" = "yes" ] ||      load_gen_ipv4 
+   [ "$OPENWRT" = "yes" ] &&   load_gen_ipv4 
 
   if [ "$SET_IPV4" = "yes" ] ; then
     echo "Setting up ipv4 address ->$IPV4_FIXED<-  on  $BAT_IF"
-     ifconfig  "$BAT_IF"  add $IPV4_FIXED netmask $IPV4_SUBNET_MASK
+     ifconfig  "$BAT_IF"   $IPV4_FIXED netmask $IPV4_SUBNET_MASK
      check_rc $?
   fi
 }

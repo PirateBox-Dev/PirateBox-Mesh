@@ -37,6 +37,7 @@ $(NON_WRT):
 	cat src/data/etc/mesh.config > $(NON_WRT)
 	grep -v \#! src/data/usr/share/mesh/mesh.common >>  $(NON_WRT)
 	sed 's/OPENWRT=yes/OPENWRT=no/' -i $(NON_WRT)
+	sed 's/IPV4_LOAD="yes"/IPV4_LOAD="no"/' -i $(NON_WRT)
 	cat non-wrt/piece_start_stop >> $(NON_WRT)
 
 
