@@ -21,6 +21,6 @@ stop() {
 }
 
 init() {
-  openwrt_postinst 
+  openwrt_postinst_single
 
 }

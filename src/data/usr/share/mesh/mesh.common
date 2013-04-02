@@ -70,14 +70,15 @@ random_ip_num() {
 }
 
 
-generate_ipv4() {
+# Single IPs are for NAT-based mesh.access and are indicated with a 0 on 2nd qualifier.
+generate_singe_ipv4() {
     # 10.x.y.z
     x=0
     y=0
     z=0
 
-    random_ip_num
-    x=$RANDOM_IP_NUM
+   
+    x=0
     random_ip_num
     y=$RANDOM_IP_NUM
     random_ip_num
@@ -85,6 +86,27 @@ generate_ipv4() {
 
     IPV4_FIXED="10.$x.$y.$z"
 } 
+
+
+# Generates NET-Ip, which will assign a single subnet to the
+#  Device, which it can use for dhcp and bridged networks.
+generate_net_ipv4() {
+
+   x=0
+   y=0
+   z=0
+   random_ip_num
+   x=$RANDOM_IP_NUM
+   random_ip_num
+   y=$RANDOM_IP_NUM
+
+   NUM=$((`</dev/urandom tr -dc 1-5 | head -c1`))
+
+   NET_IP=$(( ( $NUM - 1 ) * 50 ))
+   ROUTERIP=$(( $NET_IP + 1 ))
+
+}
+
 
 modify_MAC() {
   # Modify MAC for 2nd interface if not set
@@ -152,6 +174,20 @@ load_gen_ipv4() {
      IPV4_FIXED=$(cat $IPV4_IP_SAVE)
 }
 
+
+do_bridge_add(){
+  echo "Adding $BAT_IF to bridge $BRIDGE_NAME "
+  brctl addif "$BRIDGE_NAME"  "$BAT_IF"
+  check_rc $?
+}
+
+do_bridge_remove() {
+  echo "Removing $BAT_IF from bridge $BRIDGE_NAME "
+  brctl delif "$BRIDGE_NAME"  "$BAT_IF"
+
+}
+
+
 do_batman_up() {
   if [ "$BATCTL_FOUND" = "yes" ] ; then
      echo "Adding $MESH_IF to B.A.T.M.A.N."
@@ -203,6 +239,8 @@ do_batman_up() {
      ifconfig  "$BAT_IF"   $IPV4_FIXED netmask $IPV4_SUBNET_MASK
      check_rc $?
   fi
+
+
 }
 
 mesh_start() {
@@ -261,11 +299,13 @@ build_mesh() {
   do_wlan_if_up
   mesh_start
   do_batman_up
+  [ "$ADD_BRIDGE" = "yes" ] && do_bridge_add
   echo "finished"
 }
 
 destroy_mesh() {
   echo "Stopping Mesh Network..."
+  [ "$ADD_BRIDGE" = "yes" ] && do_bridge_remove
   mesh_stop
   do_batman_down
   do_wlan_if_down
@@ -273,9 +313,11 @@ destroy_mesh() {
 }
 
 
-openwrt_postinst() {
-  echo "Generating IPv4 ..."
-  generate_ipv4 
+
+
+openwrt_postinst_single() {
+  echo "Generating single IPv4 ..."
+  generate_singe_ipv4
   save_gen_ipv4 
   echo "Generated $IPV4_FIXED for this box!"
 
@@ -319,6 +361,37 @@ openwrt_postinst() {
   /etc/init.d/firewall reload
 
 }
+
+
+openwrt_init_meshnet() {
+# The configuration below is done for doing a bridging between mesh-zone and 
+#  normal wifi&LAN
+
+   echo "Generating MESH-net IP...."
+   generate_net_ipv4 
+   save_gen_ipv4
+   echo "Generated $IPV4_FIXED for this box and its clients!"
+
+
+   uci set network.$OPENWRT_FALLBACK_NET_ALIAS=alias
+   uci set network.$OPENWRT_FALLBACK_NET_ALIAS.ipaddr='192.168.1.1'
+   uci set network.$OPENWRT_FALLBACK_NET_ALIAS.netmask='255.255.255.0'
+   uci set network.$OPENWRT_FALLBACK_NET_ALIAS.proto=static
+   uci set network.$OPENWRT_FALLBACK_NET_ALIAS.interface="lan"
+
+   uci set network.$OPENWRT_BRIDGE_NETWORK.ipaddr=$IPV4_FIXED
+   uci set network.$OPENWRT_BRIDGE_NETWORK.netmask=$IPV4_SUBNET_MASK
+
+   uci commit
+
+   #disable IP4v configuration
+   sed "s:IPV4_LOAD=\"$IPV4_LOAD\":IPV4_LOAD=\"no\""     -i /etc/mesh.config
+   sed "s:SET_IPV4=\"$SET_IPV4\":SET_IPV4=\"no\""        -i /etc/mesh.config
+
+   #Enable Bridging on startup
+   sed "s:ADD_BRIDGE=\"$ADD_BRIDGE\":ADD_BRIDGE=\"yes\"" -i /etc/mesh.config
+}
+
 
 openwrt_preremove() {
    if [ -f /etc/config/network_pre_mesh.backup ] ; then
