@@ -37,3 +37,9 @@ NOTEBOOK?:
  - You can join the network download this <on Work> and do <on work>
  - currently there is no iptables included. You won't be able to route
 
+FAQ:
+
+I'm getting a "SIOCSIFFLAGS: No buffer space available" - what is this?
+   - It seems you card cannot run with an exchanged MACAdress, switch it 
+off.
+   - Remember runnin <scriptname> stop to clean up the partly created stuff
