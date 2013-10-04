@@ -108,6 +108,30 @@ modify_MAC() {
   fi
 }
 
+
+do_bridge_add(){
+  echo "Adding $BAT_IF to bridge $BRIDGE_NAME "
+  brctl addif "$BRIDGE_NAME"  "$BAT_IF"
+  check_rc $?
+
+  ## If we are working in a bridge, disable ipv6 on that device, too
+  # Only disable, if IPV6 exists on device
+  if [ -e "/proc/sys/net/ipv6/conf/$BAT_IF/disable_ipv6" ] ; then
+          echo "Disabling IPV6 for $BAT_IF - IF without any configuration!"
+          echo "1" > /proc/sys/net/ipv6/conf/$BAT_IF/disable_ipv6
+          check_rc $?
+  fi
+
+}
+
+do_bridge_remove() {
+  echo "Removing $BAT_IF from bridge $BRIDGE_NAME "
+  brctl delif "$BRIDGE_NAME"  "$BAT_IF"
+
+}
+
+
+
 do_wlan_if_up() {
    echo  "Setting up AdHoc Interface for B.A.T.M.A.N. "
    iw $IW_DEVICE interface add $MESH_IF type adhoc
@@ -203,7 +227,7 @@ do_batman_up() {
   fi
 
   #Load if not OpenWRt from dataset
-   [ "$OPENWRT" = "yes" ] &&   load_gen_ipv4 
+   [ "$IPV4_LOAD" = "yes" ] &&   load_gen_ipv4 
 
   if [ "$SET_IPV4" = "yes" ] ; then
     echo "Setting up ipv4 address ->$IPV4_FIXED<-  on  $BAT_IF"
@@ -264,15 +288,18 @@ build_mesh() {
   echo "Starting Mesh Network with uci-collect..."
   [ "$OPENWRT" = "yes" ] &&  echo "Starting Mesh Network with uci-collect..." \
   	&& uci_get_details
-  [ "$EXCHANGE_MAC" = "yes" ]  &&  modify_MAC
+  # Run Modify_MAC always because severall Variables are shifted internally
+  modify_MAC
   do_wlan_if_up
   mesh_start
   do_batman_up
+  [ "$ADD_BRIDGE" = "yes" ] && do_bridge_add
   echo "finished"
 }
 
 destroy_mesh() {
   echo "Stopping Mesh Network..."
+  [ "$ADD_BRIDGE" = "yes" ] && do_bridge_remove
   mesh_stop
   do_batman_down
   do_wlan_if_down
@@ -281,49 +308,53 @@ destroy_mesh() {
 
 
 openwrt_postinst() {
-  echo "Generating IPv4 ..."
-  generate_ipv4 
-  save_gen_ipv4 
-  echo "Generated $IPV4_FIXED for this box!"
 
-  echo "Backuping /etc/config/network"
-  cp -v  /etc/config/network /etc/config/network_pre_mesh.backup
-  echo "Backuping /etc/config/firewall"
-  cp -v  /etc/config/firewall /etc/config/firewall_pre_mesh.backup
+  if [ "$SET_IPV4" = "yes" ] ; then
+	  echo "Generating IPv4 ..."
+	  generate_ipv4 
+	  save_gen_ipv4 
+	  echo "Generated $IPV4_FIXED for this box!"
 
-  echo "Do interface $OPENWRT_NETWORK  setup on /etc/config/network"
-  uci set network.$OPENWRT_NETWORK=interface
-  uci set network.$OPENWRT_NETWORK.ipaddr=$IPV4_FIXED
-  uci set network.$OPENWRT_NETWORK.netmask=$IPV4_SUBNET_MASK
-  uci set network.$OPENWRT_NETWORK.proto=static
-  uci set network.$OPENWRT_NETWORK.ifname=$BAT_IF
-  uci commit
+	  echo "Backuping /etc/config/network"
+	  cp -v  /etc/config/network /etc/config/network_pre_mesh.backup
+	  echo "Backuping /etc/config/firewall"
+	  cp -v  /etc/config/firewall /etc/config/firewall_pre_mesh.backup
 
-  echo "Do firewall configuration /etc/config/firewall"
+	  echo "Do interface $OPENWRT_NETWORK  setup on /etc/config/network"
+	  uci set network.$OPENWRT_NETWORK=interface
+	  uci set network.$OPENWRT_NETWORK.ipaddr=$IPV4_FIXED
+	  uci set network.$OPENWRT_NETWORK.netmask=$IPV4_SUBNET_MASK
+	  uci set network.$OPENWRT_NETWORK.proto=static
+	  uci set network.$OPENWRT_NETWORK.ifname=$BAT_IF
+	  uci commit
 
-  #Enable Forward on lan zone. Lan zone is always the first
-  # in MR3020
-  echo " ... enabling forward on lan"
-  uci set firewall.@zone[0].forward=ACCEPT
+	  echo "Do firewall configuration /etc/config/firewall"
+
+	  #Enable Forward on lan zone. Lan zone is always the first
+	  # in MR3020
+	  echo " ... enabling forward on lan"
+	  uci set firewall.@zone[0].forward=ACCEPT
+	 
+	  echo " ... inserting new zone $OPENWRT_NETWORK"
+	  uci add firewall zone
+	  uci set firewall.@zone[-1].name=$OPENWRT_NETWORK
+	  uci set firewall.@zone[-1].masq=1
+	  uci set firewall.@zone[-1].mtu_fix=1
+	  uci set firewall.@zone[-1].input=ACCEPT
+	  uci set firewall.@zone[-1].output=ACCEPT
+	  uci set firewall.@zone[-1].forward=REJECT
+
+	  echo " ... adding new forward-rule"
+	  uci add firewall forwarding
+	  uci set firewall.@forwarding[-1].src=lan
+	  uci set firewall.@forwarding[-1].dest=$OPENWRT_NETWORK
+
+	  uci commit
  
-  echo " ... inserting new zone $OPENWRT_NETWORK"
-  uci add firewall zone
-  uci set firewall.@zone[-1].name=$OPENWRT_NETWORK
-  uci set firewall.@zone[-1].masq=1
-  uci set firewall.@zone[-1].mtu_fix=1
-  uci set firewall.@zone[-1].input=ACCEPT
-  uci set firewall.@zone[-1].output=ACCEPT
-  uci set firewall.@zone[-1].forward=REJECT
+	  echo "Reloading Firewall"
+	  /etc/init.d/firewall reload
 
-  echo " ... adding new forward-rule"
-  uci add firewall forwarding
-  uci set firewall.@forwarding[-1].src=lan
-  uci set firewall.@forwarding[-1].dest=$OPENWRT_NETWORK
-
-  uci commit
- 
-  echo "Reloading Firewall"
-  /etc/init.d/firewall reload
+  fi
 
 }
 
