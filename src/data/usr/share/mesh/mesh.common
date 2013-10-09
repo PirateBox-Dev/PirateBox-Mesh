@@ -234,6 +234,10 @@ do_batman_up() {
      ifconfig  "$BAT_IF"   $IPV4_FIXED netmask $IPV4_SUBNET_MASK
      check_rc $?
   fi
+
+  echo "Setting up GatewayMode to $BAT_GW"
+  batctl gw $BAT_GW 
+  check_rc $?
 }
 
 mesh_start() {
