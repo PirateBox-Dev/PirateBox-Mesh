@@ -1,6 +1,6 @@
 Package: piratebox-mesh
-Version: 1.1.1
-Depends: kmod-batman-adv wireless-tools 
+Version: 1.1.2
+Depends: kmod-batman-adv wireless-tools iptables-mod-extra 
 Provides: 
 Source: package/piratebox-mesh
 Section: net

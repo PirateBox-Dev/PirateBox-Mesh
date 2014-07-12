@@ -131,6 +131,23 @@ do_bridge_remove() {
 }
 
 
+do_bridge_filter() {
+  echo "Add IPv4 filtering on the bridge interface."
+  echo "1" > /proc/sys/net/bridge/bridge-nf-call-iptables 
+  check_rc $?
+  iptables -I INPUT  -m physdev -i "$BRIDGE_NAME"  --physdev-in "$BAT_IF"  -j DROP
+  check_rc $?
+  iptables -I FORWARD  -m physdev -i "$BRIDGE_NAME"  --physdev-in "$BAT_IF"   -j DROP
+  check_rc $?
+}
+
+do_bridge_filter_remove() { 
+  echo "Removing IPv4 filter on the bridge interface."
+  iptables -D INPUT  -m physdev -i "$BRIDGE_NAME"  --physdev-in "$BAT_IF"  -j DROP
+  check_rc $?
+  iptables -D FORWARD  -m physdev -i "$BRIDGE_NAME"  --physdev-in "$BAT_IF"   -j DROP
+  check_rc $?
+}
 
 do_wlan_if_up() {
    echo  "Setting up AdHoc Interface for B.A.T.M.A.N. "
@@ -238,6 +255,8 @@ do_batman_up() {
   echo "Setting up GatewayMode to $BAT_GW"
   batctl gw $BAT_GW 
   check_rc $?
+ 
+  [ "$FILTER_IPV4_BRIDGE" = "yes" ] &&  do_bridge_filter
 }
 
 mesh_start() {
@@ -271,6 +290,9 @@ do_batman_down() {
     echo "Remove $MESH_IF from  $BAT_IF via /sys/class/"
     echo none  > /sys/class/net/$MESH_IF/batman_adv/mesh_iface
   fi
+
+
+  [ "$FILTER_IPV4_BRIDGE" = "yes" ] &&  do_bridge_remove
 }
 
 check_requirements() {
