@@ -1,5 +1,5 @@
 NAME = piratebox-mesh
-VERSION = 0.3.0
+VERSION = 1.1.2
 ARCH = all
 IPK = $(NAME)_$(VERSION)_$(ARCH).ipk
 IPKDIR = src
@@ -20,7 +20,7 @@ data: $(IPKDIR)/data.tar.gz $(IPKPSDIR)/data.tar.gz
 
 
 $(IPK): $(IPKDIR)/control.tar.gz $(IPKDIR)/data.tar.gz $(IPKDIR)/control $(IPKDIR)/data
-	tar czf $@ -C $(IPKDIR) control.tar.gz data.tar.gz debian-binary
+	tar czf $@ -C $(IPKDIR) ./control.tar.gz ./data.tar.gz debian-binary
 
 all: $(IPK) $(NON_WRT)
 
