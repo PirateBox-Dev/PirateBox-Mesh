@@ -324,6 +324,7 @@ build_mesh() {
 }
 
 destroy_mesh() {
+  check_requirements 
   echo "Stopping Mesh Network..."
   [ "$ADD_BRIDGE" = "yes" ] && do_bridge_remove
   mesh_stop
