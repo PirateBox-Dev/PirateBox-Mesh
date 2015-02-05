@@ -253,8 +253,14 @@ do_batman_up() {
   fi
 
   echo "Setting up GatewayMode to $BAT_GW"
-  batctl gw $BAT_GW 
-  check_rc $?
+  if [ "$BATCTL_FOUND" = "yes" ] ; then
+	  batctl gw $BAT_GW 
+	  check_rc $?
+  else
+	echo "... using /sys/class to switch to GW mode"
+	echo "on" >  /sys/class/net/"$BAT_IF"/mesh/gw_mode
+  	check_rc $?
+  fi
  
   [ "$FILTER_IPV4_BRIDGE" = "yes" ] &&  do_bridge_filter
 }
