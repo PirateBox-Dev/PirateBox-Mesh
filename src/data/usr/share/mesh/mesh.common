@@ -42,12 +42,11 @@ generate_v6() {
   test -n "$2" && PREFIX=$2
 
   CURRENT_GEN=`ifconfig $IF |
-          grep "inet6 addr: fe80" |
-          sed  -n "s|^.*::\([^/]*\)/.*|\1|p" |
-          tr -d ":"`
+          grep "inet6" |
+          grep -o -E fe80:\[a-f,0-9:]* |
+          sed  -n "s|fe80::\([^/]*\)|\1|p" `
 
-  FIXED=`echo ${CURRENT_GEN} | tr -d "\012" | 
-                 sed "s|\(....\)\(....\)\(....\)\(....\)|\1:\2:\3:\4|"`
+  FIXED=$CURRENT_GEN
 
   echo "Extracted for $IF : $PREFIX::$FIXED "
   V6_GEN_RESULT="$PREFIX::$FIXED"
@@ -211,6 +210,8 @@ do_batman_up() {
        check_rc $?
   fi
 
+  dmesg | grep  -e B.A.T.M.A.N 
+
   echo "Starting $BAT_IF"
   ifconfig $BAT_IF 0.0.0.0 up
   check_rc $?
@@ -258,7 +259,7 @@ do_batman_up() {
 	  check_rc $?
   else
 	echo "... using /sys/class to switch to GW mode"
-	echo "on" >  /sys/class/net/"$BAT_IF"/mesh/gw_mode
+	echo "server" >  /sys/class/net/"$BAT_IF"/mesh/gw_mode
   	check_rc $?
   fi
  

@@ -16,7 +16,8 @@ OPENWRT-PACKAGE DEPENDENCIES:
   wireless-tools
 
 DEBIAN DEPENDENCIES:
-  batman-adv seems to be installed on default. You need to install batctl
+  batman-adv seems to be installed on default. You need to install batctl, if that script is not available
+  this script tries to setup everything using the sys/class interface
 
 WHAT DO THIS PACKAGE?:
   - It installs on script with all needed defaults running in Mesh mode
@@ -27,15 +28,12 @@ WHY AN EXTRA PACKAGE?:
   - I don't want to add the Mesh-software dependency to the normal PB-Package
   - Easier Update if something changes
 
-INSTALL on OPENWRT: 
- You have two possibilities: 
-   1.   With internet    : https://github.com/MaStr/mkPirateBox-Mesh/wiki/Install-on-OpenWRT-with-Internet
-   2.   Without internet : https://github.com/MaStr/mkPirateBox-Mesh/wiki/Install-on-OpenWRT-without-Internet
 
 NOTEBOOK?:
  - Not every notebook can hold two network-interfaces online
  - You can join the network download this <on Work> and do <on work>
  - currently there is no iptables included. You won't be able to route
+ - Software needed: iw, ifconfig, bridge-utils like br-ctl  & iptables Including support for "Bridge-nf"  in some cases
 
 FAQ:
 

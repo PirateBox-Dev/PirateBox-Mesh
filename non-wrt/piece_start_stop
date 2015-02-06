@@ -7,7 +7,7 @@ check_config() {
   if [ "$MESH_CHANNEL" = "0" ] ; then 
      echo "Please set option MESH_CHANNEL"
      exit 255
-  elif [ "$SOURCEMAC" =  "$MODMAC"  ] ; then
+  elif  [ "$EXCHANGE_MAC" = "yes" ] && [ "$SOURCEMAC" =  "$MODMAC"  ] ; then
      echo "Please set option SOURCEMAC to the MAC Address of you wifi device"
      ifconfig $AP_IF || ifconfig
      echo "Please set option SOURCEMAC to the MAC Address of you wifi device"
