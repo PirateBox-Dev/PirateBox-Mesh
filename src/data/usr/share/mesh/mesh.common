@@ -318,7 +318,6 @@ check_requirements() {
 
 build_mesh() {
   check_requirements
-  echo "Starting Mesh Network with uci-collect..."
   [ "$OPENWRT" = "yes" ] &&  echo "Starting Mesh Network with uci-collect..." \
   	&& uci_get_details
   # Run Modify_MAC always because severall Variables are shifted internally
