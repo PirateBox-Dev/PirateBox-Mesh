@@ -99,8 +99,8 @@ modify_MAC() {
     MODMAC=$( echo $SOURCEMAC | sed 's/c/a/'  | sed 's/1/2/' )
     check_rc $?  "sed :( "
     if [ "$MODMAC" = "$SOURCEMAC" ] ; then
-        MODMAC=$( echo $SOURCEMAC | sed 's/f/e/'  | sed 's/2/3/' )
-	check_rc $?  "2nd sed :( "
+        MODMAC=$( echo $SOURCEMAC | sed 's/f/e/'  | sed 's/2/3/' | sed 's/6/7/')
+	    check_rc $?  "2nd sed :( "
     fi
     echo "Found MAC for $RADIODEVICE :  $SOURCEMAC"
     echo " modified for 2nd Wifi-if  :  $MODMAC"
