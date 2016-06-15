@@ -121,12 +121,16 @@ do_bridge_add(){
           check_rc $?
   fi
 
+
+  [ "$FILTER_IPV4_BRIDGE" = "yes" ] &&  do_bridge_filter
 }
 
 do_bridge_remove() {
   echo "Removing $BAT_IF from bridge $BRIDGE_NAME "
   brctl delif "$BRIDGE_NAME"  "$BAT_IF"
 
+
+  [ "$FILTER_IPV4_BRIDGE" = "yes" ] && do_bridge_filter_remove 
 }
 
 
@@ -263,7 +267,7 @@ do_batman_up() {
   	check_rc $?
   fi
  
-  [ "$FILTER_IPV4_BRIDGE" = "yes" ] &&  do_bridge_filter
+
 }
 
 mesh_start() {
@@ -298,8 +302,6 @@ do_batman_down() {
     echo none  > /sys/class/net/$MESH_IF/batman_adv/mesh_iface
   fi
 
-
-  [ "$FILTER_IPV4_BRIDGE" = "yes" ] &&  do_bridge_remove
 }
 
 check_requirements() {
