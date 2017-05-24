@@ -147,9 +147,7 @@ do_bridge_filter() {
 do_bridge_filter_remove() { 
   echo "Removing IPv4 filter on the bridge interface."
   iptables -D INPUT  -m physdev -i "$BRIDGE_NAME"  --physdev-in "$BAT_IF"  -j DROP
-  check_rc $?
   iptables -D FORWARD  -m physdev -i "$BRIDGE_NAME"  --physdev-in "$BAT_IF"   -j DROP
-  check_rc $?
 }
 
 do_wlan_if_up() {
