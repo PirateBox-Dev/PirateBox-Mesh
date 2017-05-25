@@ -135,6 +135,9 @@ do_bridge_remove() {
 
 
 do_bridge_filter() {
+  # Since 3.18 we need to load the module
+  [ "$OPENWRT" = "no" ] && modprobe br_netfilter 
+
   echo "Add IPv4 filtering on the bridge interface."
   echo "1" > /proc/sys/net/bridge/bridge-nf-call-iptables 
   check_rc $?
